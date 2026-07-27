@@ -22,6 +22,10 @@ UNAVAILABLE_VALUES = {"non disponible", "non-disponible", "n/a", "na", ""}
 
 def normalize_phone(raw_phone: str) -> str:
     digits_only = re.sub(r"[\s.\-()]", "", raw_phone)
+    if digits_only.startswith("+33"):
+        digits_only = "0" + digits_only[3:]
+    elif digits_only.startswith("0033"):
+        digits_only = "0" + digits_only[4:]
     return digits_only
 
 

@@ -42,3 +42,15 @@ Chaque fichier CSV de contacts doit respecter ces colonnes, dans cet ordre :
 Le comptage par département doit toujours inclure une catégorie `Inconnu`
 pour regrouper les lignes dont le département est vide, comme le fait déjà
 le script `count_unavailable_emails.py`.
+
+## Métiers cibles
+
+Les 7 métiers ciblés par cette base de prospection sont :
+
+1. Chauffagistes
+2. Maçons
+3. Électriciens
+4. Agents immobiliers
+5. Paysagistes
+6. Plombiers
+7. Peintres (peinture en bâtiment)

@@ -38,3 +38,7 @@ Chaque fichier CSV de contacts doit respecter ces colonnes, dans cet ordre :
 | `email`       | Adresse email, ou `non disponible`              |
 | `departement` | Numéro de département (ex. "75", "77")          |
 | `siret`       | Numéro SIRET, ou `non disponible`               |
+
+Le comptage par département doit toujours inclure une catégorie `Inconnu`
+pour regrouper les lignes dont le département est vide, comme le fait déjà
+le script `count_unavailable_emails.py`.

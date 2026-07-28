@@ -13,6 +13,7 @@ notamment :
 - Paysagistes
 - Plombiers
 - Peintres (peinture en bâtiment)
+- Carreleurs
 
 Les scripts du dépôt servent à analyser, nettoyer et compter les contacts
 présents dans ces fichiers CSV (ex. `count_unavailable_emails.py`).
@@ -45,7 +46,7 @@ le script `count_unavailable_emails.py`.
 
 ## Métiers cibles
 
-Les 7 métiers ciblés par cette base de prospection sont :
+Les 8 métiers ciblés par cette base de prospection sont :
 
 1. Chauffagistes
 2. Maçons
@@ -54,3 +55,4 @@ Les 7 métiers ciblés par cette base de prospection sont :
 5. Paysagistes
 6. Plombiers
 7. Peintres (peinture en bâtiment)
+8. Carreleurs

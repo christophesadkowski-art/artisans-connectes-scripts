@@ -59,3 +59,15 @@ deviner ou de générer une valeur plausible (téléphone, email, SIRET, etc.).
 Si une information n'est pas trouvée après recherche, le champ correspondant
 doit être renseigné avec `non disponible` — jamais laissé vide, jamais rempli
 par une supposition.
+
+## Règle stricte : source vérifiable obligatoire
+
+Toute donnée ajoutée à un fichier de contacts (`contacts.csv` ou équivalent)
+doit provenir d'une source vérifiable, identifiée par une URL précise (ex. la
+page "mentions légales" du site de l'entreprise). Il ne suffit pas d'avoir
+trouvé l'information : il faut pouvoir en retracer l'origine exacte a
+posteriori.
+
+Si, après recherche, l'URL source exacte d'une ligne ne peut plus être
+retrouvée ou confirmée, cette ligne ne doit pas être conservée dans le CSV —
+elle doit être retirée plutôt que traitée comme fiable.

@@ -1,6 +1,6 @@
 # Design system — Artisans Connectés
 
-## 1. Palette
+## 1. Palette *(vérifié via TinyPages : thème de "Concierge IA pour Maçons et BTP", identique sur les 8 pages Concierge IA)*
 
 | Rôle | Valeur | Usage |
 |---|---|---|
@@ -9,25 +9,25 @@
 | Highlight (orange) | HSL(30, 92%, 52%) | Accents, badges, éléments d'urgence/action secondaire |
 | Fond | Blanc | Fond principal des pages et cartes de contenu |
 
-## 2. Polices
+## 2. Polices *(vérifié)*
 
-- Titres : **Outfit**
-- Texte courant : **Inter**
+- Titres : **Outfit** (`fontHeading: outfit`)
+- Texte courant : **Inter** (`fontBody: inter`)
 
-## 3. Règle stricte : pas de prix
+## 3. Règle stricte : pas de prix *(vérifié sur la page Maçons/BTP)*
 
-Aucun prix ni tarif ne doit être affiché sur les pages. La conversion passe par la prise de contact / le rendez-vous, jamais par un montant visible.
+Aucun montant chiffré n'apparaît sur la page. Le texte renvoie explicitement au clic pour les tarifs ("Découvrez nos formules et leurs tarifs en cliquant ci-dessous"), sans jamais afficher de prix — celui-ci n'existe que sur la page de destination `thomasgio.fr`, hors page Concierge IA.
 
-## 4. Structure commune des pages
+## 4. Structure commune des pages *(vérifié)*
 
-1. Accroche
-2. Douleur (problème concret du métier)
-3. Solution
-4. Disponibilité 24h/24, 7j/7
-5. CTA vers `thomasgio.fr`
+1. Accroche (H1)
+2. Douleur (bloc "Ce qui se passe quand vous ne répondez pas" + stat "60% d'opportunités perdues")
+3. Solution (bloc "résultats concrets", 2×3 colonnes de bénéfices)
+4. Disponibilité 24h/24, 7j/7 (mentionnée dans l'accroche et les colonnes)
+5. CTA — lien d'affiliation exact vérifié : `https://thomasgio.fr/conciergeai-7109?am_id=christophe487`
 
 ## 5. Ton différencié par métier
 
-Le levier de peur/motivation utilisé dans l'accroche et la douleur doit être **spécifique au métier**, jamais générique ("gêne de disponibilité"). Il doit se relier à une conséquence concrète du métier.
+Le levier de peur/motivation utilisé dans l'accroche et la douleur doit être **spécifique au métier**, jamais générique ("gêne de disponibilité").
 
-Exemple travaillé (Jour 17, maçon) : le silence au téléphone n'est pas présenté comme un simple inconfort de disponibilité, mais relié à la peur du client de malfaçon ou d'abandon de chantier — un enjeu propre au bâtiment, pas transposable tel quel à un autre corps de métier.
+⚠️ **Écart constaté** : sur la page "Maçons et BTP" en ligne, le mécanisme réellement utilisé est la perte du chantier au profit d'un confrère ("Le client a raccroché — et appelé un confrère"), pas la peur de malfaçon/abandon de chantier décrite précédemment ici (référence "Jour 17"). Cette dernière n'apparaît nulle part dans le contenu vérifié — à clarifier avec vous avant de trancher quelle version fait foi.

@@ -30,4 +30,4 @@ Aucun montant chiffré n'apparaît sur la page. Le texte renvoie explicitement a
 
 Le levier de peur/motivation utilisé dans l'accroche et la douleur doit être **spécifique au métier**, jamais générique ("gêne de disponibilité").
 
-⚠️ **Écart constaté** : sur la page "Maçons et BTP" en ligne, le mécanisme réellement utilisé est la perte du chantier au profit d'un confrère ("Le client a raccroché — et appelé un confrère"), pas la peur de malfaçon/abandon de chantier décrite précédemment ici (référence "Jour 17"). Cette dernière n'apparaît nulle part dans le contenu vérifié — à clarifier avec vous avant de trancher quelle version fait foi.
+Exemple réel en ligne (page "Maçons et BTP", à titre d'illustration du principe, pas comme règle figée) : le silence au téléphone est relié à la perte du chantier au profit d'un confrère ("Le client a raccroché — et appelé un confrère"), pas présenté comme un simple inconfort de disponibilité.

@@ -45,6 +45,28 @@ def analyze_contacts(
     }
 
 
+def graphify(stats: dict, output_path: str) -> None:
+    """Génère un graphique en barres des contacts par département."""
+    import matplotlib
+
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+
+    departments = sorted(stats["by_department"].items())
+    labels = [d for d, _ in departments]
+    counts = [c for _, c in departments]
+
+    fig, ax = plt.subplots(figsize=(max(6, len(labels) * 0.6), 5))
+    ax.bar(labels, counts, color="#4C72B0")
+    ax.set_xlabel("Département")
+    ax.set_ylabel("Nombre de contacts")
+    ax.set_title("Contacts par département")
+    plt.xticks(rotation=45, ha="right")
+    fig.tight_layout()
+    fig.savefig(output_path)
+    plt.close(fig)
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(
         description="Compte les emails/téléphones non disponibles et résume les contacts par département."
@@ -65,6 +87,11 @@ def main() -> None:
         default="departement",
         help="Nom de la colonne contenant le département (par défaut : 'departement')",
     )
+    parser.add_argument(
+        "--graph",
+        metavar="FICHIER",
+        help="Génère un graphique en barres des contacts par département dans FICHIER (ex: departements.png)",
+    )
     args = parser.parse_args()
 
     try:
@@ -84,6 +111,17 @@ def main() -> None:
     print("\nContacts par département :")
     for department, count in sorted(stats["by_department"].items()):
         print(f"  {department} : {count}")
+
+    if args.graph:
+        try:
+            graphify(stats, args.graph)
+        except ImportError:
+            print(
+                "Erreur : matplotlib est requis pour --graph. Installez-le avec : pip install -r requirements.txt",
+                file=sys.stderr,
+            )
+            sys.exit(1)
+        print(f"\nGraphique enregistré : {args.graph}")
 
 
 if __name__ == "__main__":

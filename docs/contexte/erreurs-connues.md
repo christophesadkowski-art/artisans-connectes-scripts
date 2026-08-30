@@ -16,4 +16,10 @@
 - Le hook `protect-contacts-csv.sh` fait échouer/bloquer (statut "ask") toute édition directe de `contacts.csv` par un agent : c'est une protection intentionnelle, pas un bug à contourner.
 - Le script n'utilise aucune dépendance externe (pas de pandas) : c'est un choix assumé pour rester simple, pas un oubli.
 
-> [EN ATTENTE : d'autres pièges (ex. encodage du CSV, formats de numéros de téléphone, doublons de contacts) n'ont pas encore été rencontrés/documentés — à compléter au fil de l'eau.]
+## Aucun autre piège confirmé à ce jour
+Aucun problème d'encodage, de doublon de contact ou d'incohérence de format téléphone n'a été rencontré ou confirmé jusqu'ici — inutile d'anticiper des correctifs pour des cas non observés. Points de vigilance à surveiller si le CSV grossit ou change de source, sans qu'il s'agisse de pièges déjà constatés :
+- **Doublons de contacts** : rien dans le script ne détecte ou ne fusionne une même entreprise apparaissant plusieurs fois.
+- **Formats de téléphone hétérogènes** : les numéros dans `contacts.csv` ne sont pas normalisés (espaces, `+33`, etc.) ; le script ne fait que comparer aux valeurs "non disponible", il n'interprète pas le format.
+- **Encodage** : `contacts.csv` est lu en UTF-8 explicite (`open(..., encoding="utf-8")`) et contient des caractères accentués ; un fichier réenregistré en Latin-1/CP1252 (ex. depuis Excel) romprait cette lecture.
+
+Mettre à jour cette section avec un cas réel (symptôme, cause, solution) dès qu'un de ces points — ou un autre — cause effectivement un problème.

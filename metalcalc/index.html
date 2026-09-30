@@ -1,5 +1,6 @@
 <title>MétalCalc</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
 /* Layout: single-page app, hero + tab switcher, two calculator modules toggled by JS, cards styled as riveted steel plates */
 :root{
@@ -100,10 +101,13 @@ input[type=number]:focus,select:focus{outline:2px solid var(--accent);outline-of
 
 .btn-primary{font-family:var(--font-display);text-transform:uppercase;letter-spacing:0.03em;font-size:15px;font-weight:600;width:100%;background:var(--accent);color:var(--accent-ink);border:none;border-radius:8px;padding:14px;cursor:pointer;margin-top:6px}
 .btn-primary:active{transform:translateY(1px)}
+.btn-secondary{font-family:var(--font-display);text-transform:uppercase;letter-spacing:0.03em;font-size:14px;font-weight:600;width:100%;background:none;color:var(--ink);border:1.5px solid var(--line);border-radius:8px;padding:12px;cursor:pointer;margin-top:10px}
+.btn-secondary:hover{border-color:var(--accent);color:var(--accent)}
 .error{color:var(--warn);font-size:13px;margin-top:8px}
 
 .results{margin-top:22px;border-top:2px solid var(--line);padding-top:18px}
 .stat-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.stat.stat-wide{grid-column:1 / -1}
 .stat{background:var(--surface);border:1px solid var(--line);border-radius:9px;padding:12px 13px}
 .stat-label{font-size:11px;text-transform:uppercase;letter-spacing:0.05em;color:var(--ink-soft)}
 .stat-value{font-family:var(--font-mono);font-size:22px;font-weight:600;color:var(--ink);margin-top:2px}
@@ -171,6 +175,14 @@ input[type=number]:focus,select:focus{outline:2px solid var(--accent);outline-of
       <p class="note">Exemple pré-rempli pour un garde-corps. Remplace les lignes par tes propres mesures.</p>
       <form id="form-debit">
         <fieldset>
+          <legend>Client / chantier (optionnel)</legend>
+          <div class="field">
+            <label for="debit-client">Apparaît sur le PDF exporté</label>
+            <input type="text" id="debit-client" placeholder="Ex. Garde-corps M. Dupont">
+          </div>
+        </fieldset>
+
+        <fieldset>
           <legend>Barre de stock</legend>
           <div class="chips" id="chips-barlength">
             <button type="button" class="chip active" data-len="6000">6 m</button>
@@ -211,12 +223,21 @@ input[type=number]:focus,select:focus{outline:2px solid var(--accent);outline-of
         </div>
         <h3 style="font-size:14px;margin-bottom:10px">Plan de découpe</h3>
         <div id="bar-plans"></div>
+        <button type="button" class="btn-secondary" id="btn-pdf-debit">Générer le PDF</button>
       </div>
     </section>
 
     <section id="view-peinture" class="view">
       <p class="note">Exemple pré-rempli avec 3 sections d'un garde-corps type (poteaux, lisse, barreaudage). Ajoute, modifie ou supprime les sections selon ta structure.</p>
       <form id="form-peinture">
+        <fieldset>
+          <legend>Client / chantier (optionnel)</legend>
+          <div class="field">
+            <label for="peint-client">Apparaît sur le PDF exporté</label>
+            <input type="text" id="peint-client" placeholder="Ex. Garde-corps M. Dupont">
+          </div>
+        </fieldset>
+
         <fieldset>
           <legend>Sections de la structure</legend>
           <div id="profils-list"></div>
@@ -263,6 +284,12 @@ input[type=number]:focus,select:focus{outline:2px solid var(--accent);outline-of
             <div class="stat-value" id="res-surface">0 m²</div>
           </div>
           <div class="stat">
+            <div class="stat-label">Poids total</div>
+            <div class="stat-value" id="res-poids">0 kg</div>
+          </div>
+        </div>
+        <div class="stat-row">
+          <div class="stat stat-wide">
             <div class="stat-label" id="res-produit-label">Peinture nécessaire</div>
             <div class="stat-value accent" id="res-produit">0 L</div>
           </div>
@@ -270,6 +297,8 @@ input[type=number]:focus,select:focus{outline:2px solid var(--accent);outline-of
         <h3 style="font-size:14px;margin-bottom:8px">Détail par section</h3>
         <div id="peint-breakdown"></div>
         <p class="note" id="res-detail"></p>
+        <p class="note"><strong>Poids.</strong> Calculé à partir de l'épaisseur de chaque profilé et d'une masse volumique acier de 7850 kg/m³ (formule géométrique, angles vifs). Utile pour le transport/levage, et certains thermolaqueurs ou galvanisateurs facturent au poids plutôt qu'à la surface.</p>
+        <button type="button" class="btn-secondary" id="btn-pdf-peinture">Générer le PDF</button>
       </div>
     </section>
   </main>
@@ -389,6 +418,15 @@ input[type=number]:focus,select:focus{outline:2px solid var(--accent);outline-of
     }).join('');
     $('#bar-plans').innerHTML = plansHtml;
     $('#debit-results').hidden = false;
+
+    lastDebitResult = {
+      client: $('#debit-client').value,
+      barLength: barLength,
+      kerf: kerf,
+      nbBars: nbBars,
+      wastePct: wastePct,
+      bars: result.bars
+    };
   });
 
   // ---------- surface à peindre : plusieurs sections de profilé ----------
@@ -411,13 +449,16 @@ input[type=number]:focus,select:focus{outline:2px solid var(--accent);outline-of
       '<option value="carre">Tube carré</option><option value="rect">Tube rectangulaire</option>' +
       '<option value="rond">Tube rond</option><option value="plat">Plat</option><option value="corniere">Cornière</option>' +
       '</select></div>' +
-      '<div class="dim-group" data-type="carre">' +
-      '<div class="field"><label for="dim-carre-a-' + id + '">Côté (mm)</label><input type="number" id="dim-carre-a-' + id + '" data-field="a" value="' + (dims.carreA||40) + '" min="1" step="any"></div></div>' +
+      '<div class="dim-group" data-type="carre"><div class="row2">' +
+      '<div class="field"><label for="dim-carre-a-' + id + '">Côté (mm)</label><input type="number" id="dim-carre-a-' + id + '" data-field="a" value="' + (dims.carreA||40) + '" min="1" step="any"></div>' +
+      '<div class="field"><label for="dim-carre-e-' + id + '">Épaisseur (mm)</label><input type="number" id="dim-carre-e-' + id + '" data-field="e" value="' + (dims.carreE||2) + '" min="0.5" step="any"></div></div></div>' +
       '<div class="dim-group hidden-dim" data-type="rect"><div class="row2">' +
       '<div class="field"><label for="dim-rect-a-' + id + '">Côté a (mm)</label><input type="number" id="dim-rect-a-' + id + '" data-field="a" value="' + (dims.rectA||60) + '" min="1" step="any"></div>' +
-      '<div class="field"><label for="dim-rect-b-' + id + '">Côté b (mm)</label><input type="number" id="dim-rect-b-' + id + '" data-field="b" value="' + (dims.rectB||40) + '" min="1" step="any"></div></div></div>' +
-      '<div class="dim-group hidden-dim" data-type="rond">' +
-      '<div class="field"><label for="dim-rond-d-' + id + '">Diamètre (mm)</label><input type="number" id="dim-rond-d-' + id + '" data-field="d" value="' + (dims.rondD||42) + '" min="1" step="any"></div></div>' +
+      '<div class="field"><label for="dim-rect-b-' + id + '">Côté b (mm)</label><input type="number" id="dim-rect-b-' + id + '" data-field="b" value="' + (dims.rectB||40) + '" min="1" step="any"></div></div>' +
+      '<div class="field"><label for="dim-rect-e-' + id + '">Épaisseur (mm)</label><input type="number" id="dim-rect-e-' + id + '" data-field="e" value="' + (dims.rectE||2) + '" min="0.5" step="any"></div></div>' +
+      '<div class="dim-group hidden-dim" data-type="rond"><div class="row2">' +
+      '<div class="field"><label for="dim-rond-d-' + id + '">Diamètre (mm)</label><input type="number" id="dim-rond-d-' + id + '" data-field="d" value="' + (dims.rondD||42) + '" min="1" step="any"></div>' +
+      '<div class="field"><label for="dim-rond-e-' + id + '">Épaisseur (mm)</label><input type="number" id="dim-rond-e-' + id + '" data-field="e" value="' + (dims.rondE||2) + '" min="0.5" step="any"></div></div></div>' +
       '<div class="dim-group hidden-dim" data-type="plat"><div class="row2">' +
       '<div class="field"><label for="dim-plat-l-' + id + '">Largeur (mm)</label><input type="number" id="dim-plat-l-' + id + '" data-field="l" value="' + (dims.platL||50) + '" min="1" step="any"></div>' +
       '<div class="field"><label for="dim-plat-e-' + id + '">Épaisseur (mm)</label><input type="number" id="dim-plat-e-' + id + '" data-field="e" value="' + (dims.platE||8) + '" min="0.5" step="any"></div></div></div>' +
@@ -467,6 +508,31 @@ input[type=number]:focus,select:focus{outline:2px solid var(--accent);outline-of
     return 0;
   }
 
+  // Masse volumique acier ~7850 kg/m3, convertie en kg/mm3 pour rester homogène avec les dimensions en mm
+  var DENSITE_ACIER_KG_MM3 = 7850 / 1e9;
+
+  function aireSectionMM2(type, rowEl){
+    function v(field){ return parseFloat(rowEl.querySelector('.dim-group[data-type="' + type + '"] [data-field="' + field + '"]').value) || 0; }
+    if (type === 'carre'){
+      var a = v('a'), e = v('e'), ai = Math.max(a - 2*e, 0);
+      return a*a - ai*ai;
+    }
+    if (type === 'rect'){
+      var a2 = v('a'), b2 = v('b'), e2 = v('e'), ai2 = Math.max(a2 - 2*e2, 0), bi2 = Math.max(b2 - 2*e2, 0);
+      return a2*b2 - ai2*bi2;
+    }
+    if (type === 'rond'){
+      var d = v('d'), e3 = v('e'), di = Math.max(d - 2*e3, 0);
+      return (Math.PI/4) * (d*d - di*di);
+    }
+    if (type === 'plat') return v('l') * v('e');
+    if (type === 'corniere'){
+      var a4 = v('a'), b4 = v('b'), e4 = v('e');
+      return e4 * (a4 + b4 - e4);
+    }
+    return 0;
+  }
+
   $('#form-peinture').addEventListener('submit', function(e){
     e.preventDefault();
     var marge = parseFloat($('#peint-marge').value) || 0;
@@ -476,15 +542,19 @@ input[type=number]:focus,select:focus{outline:2px solid var(--accent);outline-of
     var grammage = parseFloat($('#peint-grammage').value) || 1;
 
     var totalSurface = 0;
+    var totalPoids = 0;
     var breakdown = [];
     $all('.profil-card').forEach(function(row, i){
       var type = row.querySelector('[data-role="type"]').value;
       var perim = perimetreMM(type, row);
+      var aire = aireSectionMM2(type, row);
       var longueur = parseFloat(row.querySelector('[data-role="longueur"]').value) || 0;
       var qte = parseFloat(row.querySelector('[data-role="quantite"]').value) || 0;
       var surfaceRow = (perim * longueur / 1000000) * qte;
+      var poidsRow = aire * longueur * qte * DENSITE_ACIER_KG_MM3;
       totalSurface += surfaceRow;
-      breakdown.push({ label: 'Section ' + (i + 1) + ' (' + TYPE_LABELS[type] + ')', surface: surfaceRow });
+      totalPoids += poidsRow;
+      breakdown.push({ label: 'Section ' + (i + 1) + ' (' + TYPE_LABELS[type] + ')', surface: surfaceRow, poids: poidsRow, longueur: longueur, qte: qte });
     });
 
     var produitVal, produitUnit, detail;
@@ -499,13 +569,120 @@ input[type=number]:focus,select:focus{outline:2px solid var(--accent);outline-of
     }
 
     $('#res-surface').textContent = totalSurface.toFixed(2) + ' m²';
+    $('#res-poids').textContent = totalPoids.toFixed(1) + ' kg';
     $('#res-produit-label').textContent = traitement === 'liquide' ? 'Peinture nécessaire' : 'Poudre nécessaire';
     $('#res-produit').textContent = produitVal.toFixed(2) + ' ' + produitUnit;
     $('#res-detail').innerHTML = '<strong>Détail.</strong> ' + detail;
     $('#peint-breakdown').innerHTML = breakdown.map(function(b){
-      return '<div class="breakdown-row"><span>' + b.label + '</span><span>' + b.surface.toFixed(2) + ' m²</span></div>';
+      return '<div class="breakdown-row"><span>' + b.label + '</span><span>' + b.surface.toFixed(2) + ' m² · ' + b.poids.toFixed(1) + ' kg</span></div>';
     }).join('');
     $('#peinture-results').hidden = false;
+
+    lastPeintureResult = {
+      client: $('#peint-client').value,
+      traitement: traitement,
+      breakdown: breakdown,
+      totalSurface: totalSurface,
+      totalPoids: totalPoids,
+      produitVal: produitVal,
+      produitUnit: produitUnit,
+      produitLabel: traitement === 'liquide' ? 'Peinture nécessaire' : 'Poudre nécessaire',
+      detail: detail
+    };
+  });
+
+  // ---------- export PDF ----------
+  var lastDebitResult = null;
+  var lastPeintureResult = null;
+
+  function pdfHeader(doc, title, client){
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(18);
+    doc.text('MétalCalc', 14, 18);
+    doc.setFontSize(12);
+    doc.text(title, 14, 26);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10);
+    doc.text('Date : ' + new Date().toLocaleDateString('fr-FR'), 14, 33);
+    var y = 33;
+    if (client){
+      y = 39;
+      doc.text('Client / chantier : ' + client, 14, y);
+    }
+    doc.setDrawColor(180,180,180);
+    doc.line(14, y + 4, 196, y + 4);
+    return y + 12;
+  }
+
+  $('#btn-pdf-debit').addEventListener('click', function(){
+    if (!lastDebitResult){ return; }
+    var doc = new window.jspdf.jsPDF();
+    var y = pdfHeader(doc, 'Débit de barres', lastDebitResult.client);
+
+    doc.setFontSize(11);
+    doc.text('Barre de stock : ' + lastDebitResult.barLength + ' mm  —  trait de scie : ' + lastDebitResult.kerf + ' mm', 14, y);
+    y += 8;
+    doc.text('Barres à acheter : ' + lastDebitResult.nbBars, 14, y);
+    y += 6;
+    doc.text('Chute totale : ' + lastDebitResult.wastePct.toFixed(1) + ' %', 14, y);
+    y += 10;
+
+    doc.setFont('helvetica', 'bold');
+    doc.text('Plan de découpe', 14, y);
+    doc.setFont('helvetica', 'normal');
+    y += 7;
+    lastDebitResult.bars.forEach(function(bar, i){
+      if (y > 280){ doc.addPage(); y = 20; }
+      doc.text('Barre ' + (i + 1) + ' : ' + bar.items.join(' + ') + ' mm  (chute ' + Math.max(bar.remaining,0).toFixed(0) + ' mm)', 14, y);
+      y += 6;
+    });
+
+    doc.save('metalcalc-debit.pdf');
+  });
+
+  $('#btn-pdf-peinture').addEventListener('click', function(){
+    if (!lastPeintureResult){ return; }
+    var r = lastPeintureResult;
+    var doc = new window.jspdf.jsPDF();
+    var y = pdfHeader(doc, 'Surface à peindre & poids', r.client);
+
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(11);
+    doc.text('Section', 14, y);
+    doc.text('Long. (mm)', 90, y);
+    doc.text('Qté', 120, y);
+    doc.text('Surface', 145, y);
+    doc.text('Poids', 175, y);
+    doc.setFont('helvetica', 'normal');
+    y += 6;
+    doc.setDrawColor(210,210,210);
+    doc.line(14, y - 4, 196, y - 4);
+    r.breakdown.forEach(function(b){
+      if (y > 280){ doc.addPage(); y = 20; }
+      doc.text(b.label, 14, y);
+      doc.text(String(b.longueur), 90, y);
+      doc.text(String(b.qte), 120, y);
+      doc.text(b.surface.toFixed(2) + ' m²', 145, y);
+      doc.text(b.poids.toFixed(1) + ' kg', 175, y);
+      y += 6;
+    });
+    y += 4;
+    doc.line(14, y - 4, 196, y - 4);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Total', 14, y);
+    doc.text(r.totalSurface.toFixed(2) + ' m²', 145, y);
+    doc.text(r.totalPoids.toFixed(1) + ' kg', 175, y);
+    doc.setFont('helvetica', 'normal');
+    y += 12;
+
+    doc.setFont('helvetica', 'bold');
+    doc.text(r.produitLabel + ' : ' + r.produitVal.toFixed(2) + ' ' + r.produitUnit, 14, y);
+    doc.setFont('helvetica', 'normal');
+    y += 6;
+    doc.setFontSize(9);
+    doc.text(r.detail, 14, y);
+
+    doc.save('metalcalc-peinture.pdf');
   });
 })();
 </script>

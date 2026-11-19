@@ -134,7 +134,7 @@ input[type=number]:focus,select:focus{outline:2px solid var(--accent);outline-of
     <div class="hero-content">
       <p class="eyebrow">Outil métallerie</p>
       <h1>MétalCalc</h1>
-      <p class="subtitle">Débit de barres, surface à peindre &amp; poids</p>
+      <p class="subtitle">Débit de barres, peinture &amp; escalier</p>
       <p class="tagline">Calculés en une minute, sur chantier ou à l'atelier.</p>
     </div>
   </header>
@@ -143,6 +143,7 @@ input[type=number]:focus,select:focus{outline:2px solid var(--accent);outline-of
     <button class="tab active" data-view="home">Accueil</button>
     <button class="tab" data-view="debit">Débit de barres</button>
     <button class="tab" data-view="peinture">Surface à peindre</button>
+    <button class="tab" data-view="escalier">Escalier</button>
   </nav>
 
   <main>
@@ -165,6 +166,16 @@ input[type=number]:focus,select:focus{outline:2px solid var(--accent);outline-of
           <span class="card-body">
             <h3>Surface à peindre</h3>
             <p>Surface développée d'un profilé et quantité de peinture ou de poudre nécessaire.</p>
+          </span>
+          <span class="card-arrow">&#8250;</span>
+        </button>
+        <button class="card" data-open="escalier">
+          <span class="card-icon" aria-hidden="true">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M3 21V17H7V13H11V9H15V5H19V21H3Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
+          </span>
+          <span class="card-body">
+            <h3>Escalier</h3>
+            <p>Nombre de marches, hauteur réelle et giron pour une montée confortable.</p>
           </span>
           <span class="card-arrow">&#8250;</span>
         </button>
@@ -300,6 +311,81 @@ input[type=number]:focus,select:focus{outline:2px solid var(--accent);outline-of
         <p class="note" id="res-detail"></p>
         <p class="note"><strong>Poids.</strong> Calculé à partir de l'épaisseur de chaque profilé et d'une masse volumique acier de 7850 kg/m³ (formule géométrique, angles vifs). Utile pour le transport/levage, et certains thermolaqueurs ou galvanisateurs facturent au poids plutôt qu'à la surface.</p>
         <button type="button" class="btn-secondary" id="btn-pdf-peinture">Générer le PDF</button>
+      </div>
+    </section>
+
+    <section id="view-escalier" class="view">
+      <p class="note">Exemple pré-rempli pour un étage droit de 2,70 m sous plafond fini. Ajuste la hauteur totale selon ton chantier.</p>
+      <form id="form-escalier">
+        <fieldset>
+          <legend>Client / chantier (optionnel)</legend>
+          <div class="field">
+            <label for="escalier-client">Apparaît sur le PDF exporté</label>
+            <input type="text" id="escalier-client" placeholder="Ex. Escalier M. Dupont">
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>Hauteur à monter</legend>
+          <div class="field">
+            <label for="escalier-hauteur">Hauteur totale sol fini à sol fini (mm)</label>
+            <input type="number" id="escalier-hauteur" value="2700" min="500" step="10">
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>Marche visée</legend>
+          <div class="chips" id="chips-marche">
+            <button type="button" class="chip" data-h="160">160 mm</button>
+            <button type="button" class="chip active" data-h="175">175 mm</button>
+            <button type="button" class="chip" data-h="190">190 mm</button>
+          </div>
+          <div class="row2">
+            <div class="field">
+              <label for="escalier-h-visee">Hauteur de marche visée (mm)</label>
+              <input type="number" id="escalier-h-visee" value="175" min="140" max="220" step="1">
+            </div>
+            <div class="field">
+              <label for="escalier-blondel">Constante de Blondel (mm)</label>
+              <input type="number" id="escalier-blondel" value="630" min="600" max="640" step="5">
+            </div>
+          </div>
+          <p class="note">Formule de confort (loi de Blondel) : 2 × hauteur de marche + giron ≈ 630 mm. C'est une règle de confort de montée, pas une norme réglementaire : vérifie le DTU ou le code du travail applicable si c'est un ERP ou un lieu de travail.</p>
+        </fieldset>
+
+        <button type="submit" class="btn-primary">Calculer l'escalier</button>
+        <p class="error" id="escalier-error" hidden></p>
+      </form>
+
+      <div class="results" id="escalier-results" hidden>
+        <div class="stat-row">
+          <div class="stat">
+            <div class="stat-label">Nombre de marches</div>
+            <div class="stat-value accent" id="res-esc-nb">0</div>
+          </div>
+          <div class="stat">
+            <div class="stat-label">Hauteur de marche réelle</div>
+            <div class="stat-value" id="res-esc-h">0 mm</div>
+          </div>
+        </div>
+        <div class="stat-row">
+          <div class="stat">
+            <div class="stat-label">Giron réel</div>
+            <div class="stat-value" id="res-esc-giron">0 mm</div>
+          </div>
+          <div class="stat">
+            <div class="stat-label">Emprise au sol</div>
+            <div class="stat-value" id="res-esc-emprise">0 m</div>
+          </div>
+        </div>
+        <div class="stat-row">
+          <div class="stat stat-wide">
+            <div class="stat-label">Inclinaison</div>
+            <div class="stat-value" id="res-esc-angle">0°</div>
+          </div>
+        </div>
+        <p class="error" id="res-esc-warn" hidden></p>
+        <button type="button" class="btn-secondary" id="btn-pdf-escalier">Générer le PDF</button>
       </div>
     </section>
   </main>
@@ -592,9 +678,81 @@ input[type=number]:focus,select:focus{outline:2px solid var(--accent);outline-of
     };
   });
 
+  // ---------- escalier ----------
+  $all('#chips-marche .chip').forEach(function(c){
+    c.addEventListener('click', function(){
+      $all('#chips-marche .chip').forEach(function(o){ o.classList.remove('active'); });
+      c.classList.add('active');
+      $('#escalier-h-visee').value = c.dataset.h;
+    });
+  });
+  $('#escalier-h-visee').addEventListener('input', function(){
+    $all('#chips-marche .chip').forEach(function(o){ o.classList.toggle('active', o.dataset.h === $('#escalier-h-visee').value); });
+  });
+
+  function calculerEscalier(hauteurTotale, hVisee, blondel){
+    var n = Math.max(1, Math.round(hauteurTotale / hVisee));
+    var hReelle = hauteurTotale / n;
+    var giron = blondel - 2 * hReelle;
+    var nbGirons = Math.max(n - 1, 0);
+    var emprise = nbGirons * giron;
+    var angleDeg = emprise > 0 ? Math.atan2(hauteurTotale, emprise) * 180 / Math.PI : 90;
+    return { n: n, hReelle: hReelle, giron: giron, emprise: emprise, angleDeg: angleDeg };
+  }
+
+  $('#form-escalier').addEventListener('submit', function(e){
+    e.preventDefault();
+    var hauteurTotale = parseFloat($('#escalier-hauteur').value) || 0;
+    var hVisee = parseFloat($('#escalier-h-visee').value) || 175;
+    var blondel = parseFloat($('#escalier-blondel').value) || 630;
+
+    var errBox = $('#escalier-error');
+    if (hauteurTotale <= 0 || hVisee <= 0){
+      errBox.textContent = 'Indique une hauteur totale à monter et une hauteur de marche visée valides.';
+      errBox.hidden = false;
+      $('#escalier-results').hidden = true;
+      return;
+    }
+    errBox.hidden = true;
+
+    var r = calculerEscalier(hauteurTotale, hVisee, blondel);
+
+    $('#res-esc-nb').textContent = r.n;
+    $('#res-esc-h').textContent = r.hReelle.toFixed(1) + ' mm';
+    $('#res-esc-giron').textContent = r.giron.toFixed(1) + ' mm';
+    $('#res-esc-emprise').textContent = (r.emprise / 1000).toFixed(2) + ' m';
+    $('#res-esc-angle').textContent = r.angleDeg.toFixed(1) + '°';
+
+    var warnings = [];
+    if (r.hReelle < 160 || r.hReelle > 200) warnings.push('hauteur de marche (' + r.hReelle.toFixed(0) + ' mm) hors de la fourchette confort 160-200 mm');
+    if (r.giron < 240 || r.giron > 320) warnings.push('giron (' + r.giron.toFixed(0) + ' mm) hors de la fourchette confort 240-320 mm');
+    var warnBox = $('#res-esc-warn');
+    if (warnings.length){
+      warnBox.textContent = 'Attention, ' + warnings.join(' et ') + '. Ajuste la hauteur de marche visée ou la hauteur totale si possible.';
+      warnBox.hidden = false;
+    } else {
+      warnBox.hidden = true;
+    }
+
+    $('#escalier-results').hidden = false;
+
+    lastEscalierResult = {
+      client: $('#escalier-client').value,
+      hauteurTotale: hauteurTotale,
+      blondel: blondel,
+      n: r.n,
+      hReelle: r.hReelle,
+      giron: r.giron,
+      emprise: r.emprise,
+      angleDeg: r.angleDeg,
+      warnings: warnings
+    };
+  });
+
   // ---------- export PDF ----------
   var lastDebitResult = null;
   var lastPeintureResult = null;
+  var lastEscalierResult = null;
 
   function pdfHeader(doc, title, client){
     doc.setFont('helvetica', 'bold');
@@ -684,6 +842,38 @@ input[type=number]:focus,select:focus{outline:2px solid var(--accent);outline-of
     doc.text(r.detail, 14, y);
 
     doc.save('metalcalc-peinture.pdf');
+  });
+
+  $('#btn-pdf-escalier').addEventListener('click', function(){
+    if (!lastEscalierResult){ return; }
+    var r = lastEscalierResult;
+    var doc = new window.jspdf.jsPDF();
+    var y = pdfHeader(doc, "Calcul d'escalier", r.client);
+
+    doc.setFontSize(11);
+    doc.text('Hauteur totale à monter : ' + r.hauteurTotale + ' mm', 14, y);
+    y += 8;
+    doc.text('Nombre de marches : ' + r.n, 14, y);
+    y += 6;
+    doc.text('Hauteur de marche réelle : ' + r.hReelle.toFixed(1) + ' mm', 14, y);
+    y += 6;
+    doc.text('Giron réel : ' + r.giron.toFixed(1) + ' mm', 14, y);
+    y += 6;
+    doc.text('Emprise au sol : ' + (r.emprise / 1000).toFixed(2) + ' m', 14, y);
+    y += 6;
+    doc.text('Inclinaison : ' + r.angleDeg.toFixed(1) + '°', 14, y);
+    y += 10;
+
+    doc.setFont('helvetica', 'italic');
+    doc.setFontSize(9);
+    doc.text('Formule de confort (loi de Blondel, constante ' + r.blondel + ' mm) : 2 x hauteur de marche + giron. Ce n\'est pas une norme réglementaire.', 14, y, { maxWidth: 182 });
+    y += 10;
+    if (r.warnings.length){
+      doc.setFont('helvetica', 'bold');
+      doc.text('Attention : ' + r.warnings.join(' et ') + '.', 14, y, { maxWidth: 182 });
+    }
+
+    doc.save('metalcalc-escalier.pdf');
   });
 })();
 </script>

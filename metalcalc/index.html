@@ -315,7 +315,7 @@ input[type=number]:focus,select:focus{outline:2px solid var(--accent);outline-of
     </section>
 
     <section id="view-escalier" class="view">
-      <p class="note">Exemple pré-rempli pour un étage droit de 2,70 m sous plafond fini. Ajuste la hauteur totale selon ton chantier.</p>
+      <p class="note">Calcul pour un escalier droit (une seule volée, sans palier ni quart tournant). Exemple pré-rempli pour un étage droit de 2,70 m sous plafond fini.</p>
       <form id="form-escalier">
         <fieldset>
           <legend>Client / chantier (optionnel)</legend>
@@ -334,23 +334,50 @@ input[type=number]:focus,select:focus{outline:2px solid var(--accent);outline-of
         </fieldset>
 
         <fieldset>
-          <legend>Marche visée</legend>
-          <div class="chips" id="chips-marche">
-            <button type="button" class="chip" data-h="160">160 mm</button>
-            <button type="button" class="chip active" data-h="175">175 mm</button>
-            <button type="button" class="chip" data-h="190">190 mm</button>
+          <legend>Tu connais</legend>
+          <div class="chips" id="chips-escalier-mode">
+            <button type="button" class="chip active" data-mode="hauteur">La hauteur de marche</button>
+            <button type="button" class="chip" data-mode="giron">Le giron</button>
+            <button type="button" class="chip" data-mode="emprise">L'emprise au sol disponible</button>
           </div>
-          <div class="row2">
+
+          <div class="dim-group" data-mode-group="hauteur">
+            <div class="chips" id="chips-marche">
+              <button type="button" class="chip" data-h="160">160 mm</button>
+              <button type="button" class="chip active" data-h="175">175 mm</button>
+              <button type="button" class="chip" data-h="190">190 mm</button>
+            </div>
             <div class="field">
               <label for="escalier-h-visee">Hauteur de marche visée (mm)</label>
-              <input type="number" id="escalier-h-visee" value="175" min="140" max="220" step="1">
-            </div>
-            <div class="field">
-              <label for="escalier-blondel">Constante de Blondel (mm)</label>
-              <input type="number" id="escalier-blondel" value="630" min="600" max="640" step="5">
+              <input type="number" id="escalier-h-visee" value="175" min="100" max="250" step="1">
             </div>
           </div>
-          <p class="note">Formule de confort (loi de Blondel) : 2 × hauteur de marche + giron ≈ 630 mm. C'est une règle de confort de montée, pas une norme réglementaire : vérifie le DTU ou le code du travail applicable si c'est un ERP ou un lieu de travail.</p>
+
+          <div class="dim-group hidden-dim" data-mode-group="giron">
+            <div class="chips" id="chips-giron">
+              <button type="button" class="chip" data-g="250">250 mm</button>
+              <button type="button" class="chip active" data-g="280">280 mm</button>
+              <button type="button" class="chip" data-g="300">300 mm</button>
+            </div>
+            <div class="field">
+              <label for="escalier-giron-vise">Giron visé (mm)</label>
+              <input type="number" id="escalier-giron-vise" value="280" min="150" max="400" step="1">
+            </div>
+          </div>
+
+          <div class="dim-group hidden-dim" data-mode-group="emprise">
+            <div class="field">
+              <label for="escalier-emprise-dispo">Emprise au sol disponible (mm)</label>
+              <input type="number" id="escalier-emprise-dispo" value="3780" min="300" step="10">
+            </div>
+            <p class="note">L'outil cherche le nombre de marches qui se rapproche le plus du confort de Blondel tout en tenant exactement dans cette longueur au sol.</p>
+          </div>
+
+          <div class="field">
+            <label for="escalier-blondel">Constante de Blondel (mm)</label>
+            <input type="number" id="escalier-blondel" value="630" min="600" max="640" step="5">
+          </div>
+          <p class="note">Formule de confort (loi de Blondel) : 2 × hauteur de marche + giron ≈ 630 mm. Donne l'une des trois valeurs (hauteur de marche, giron, ou emprise disponible), l'outil calcule les autres. C'est une règle de confort de montée, pas une norme réglementaire : vérifie le DTU ou le code du travail applicable si c'est un ERP ou un lieu de travail.</p>
         </fieldset>
 
         <button type="submit" class="btn-primary">Calculer l'escalier</button>
@@ -679,6 +706,16 @@ input[type=number]:focus,select:focus{outline:2px solid var(--accent);outline-of
   });
 
   // ---------- escalier ----------
+  var escalierMode = 'hauteur';
+  $all('#chips-escalier-mode .chip').forEach(function(c){
+    c.addEventListener('click', function(){
+      $all('#chips-escalier-mode .chip').forEach(function(o){ o.classList.remove('active'); });
+      c.classList.add('active');
+      escalierMode = c.dataset.mode;
+      $all('[data-mode-group]').forEach(function(g){ g.classList.toggle('hidden-dim', g.dataset.modeGroup !== escalierMode); });
+    });
+  });
+
   $all('#chips-marche .chip').forEach(function(c){
     c.addEventListener('click', function(){
       $all('#chips-marche .chip').forEach(function(o){ o.classList.remove('active'); });
@@ -690,8 +727,19 @@ input[type=number]:focus,select:focus{outline:2px solid var(--accent);outline-of
     $all('#chips-marche .chip').forEach(function(o){ o.classList.toggle('active', o.dataset.h === $('#escalier-h-visee').value); });
   });
 
-  function calculerEscalier(hauteurTotale, hVisee, blondel){
-    var n = Math.max(1, Math.round(hauteurTotale / hVisee));
+  $all('#chips-giron .chip').forEach(function(c){
+    c.addEventListener('click', function(){
+      $all('#chips-giron .chip').forEach(function(o){ o.classList.remove('active'); });
+      c.classList.add('active');
+      $('#escalier-giron-vise').value = c.dataset.g;
+    });
+  });
+  $('#escalier-giron-vise').addEventListener('input', function(){
+    $all('#chips-giron .chip').forEach(function(o){ o.classList.toggle('active', o.dataset.g === $('#escalier-giron-vise').value); });
+  });
+
+  function depuisN(hauteurTotale, n, blondel){
+    n = Math.max(1, n);
     var hReelle = hauteurTotale / n;
     var giron = blondel - 2 * hReelle;
     var nbGirons = Math.max(n - 1, 0);
@@ -700,22 +748,73 @@ input[type=number]:focus,select:focus{outline:2px solid var(--accent);outline-of
     return { n: n, hReelle: hReelle, giron: giron, emprise: emprise, angleDeg: angleDeg };
   }
 
+  // Mode "hauteur" : la hauteur de marche visée fixe le nombre de marches, le giron en découle (Blondel).
+  function calculerParHauteur(hauteurTotale, hVisee, blondel){
+    return depuisN(hauteurTotale, Math.round(hauteurTotale / hVisee), blondel);
+  }
+
+  // Mode "giron" : le giron visé fixe (via Blondel) une hauteur de marche estimée, qui donne le nombre de marches.
+  function calculerParGiron(hauteurTotale, gVisee, blondel){
+    var hEstimee = (blondel - gVisee) / 2;
+    if (hEstimee <= 0) hEstimee = 1;
+    return depuisN(hauteurTotale, Math.round(hauteurTotale / hEstimee), blondel);
+  }
+
+  // Mode "emprise" : hauteur et longueur au sol disponibles sont fixées, on cherche le nombre de
+  // marches qui approche le mieux le confort de Blondel tout en tenant exactement dans cette longueur.
+  function calculerParEmprise(hauteurTotale, empriseDispo, blondel){
+    var meilleurN = 2, meilleurEcart = Infinity;
+    for (var n = 2; n <= 40; n++){
+      var hReelle = hauteurTotale / n;
+      var giron = empriseDispo / (n - 1);
+      var ecart = Math.abs(2 * hReelle + giron - blondel);
+      if (ecart < meilleurEcart){ meilleurEcart = ecart; meilleurN = n; }
+    }
+    var hReelle = hauteurTotale / meilleurN;
+    var giron = empriseDispo / (meilleurN - 1);
+    var angleDeg = empriseDispo > 0 ? Math.atan2(hauteurTotale, empriseDispo) * 180 / Math.PI : 90;
+    return { n: meilleurN, hReelle: hReelle, giron: giron, emprise: empriseDispo, angleDeg: angleDeg };
+  }
+
   $('#form-escalier').addEventListener('submit', function(e){
     e.preventDefault();
     var hauteurTotale = parseFloat($('#escalier-hauteur').value) || 0;
-    var hVisee = parseFloat($('#escalier-h-visee').value) || 175;
     var blondel = parseFloat($('#escalier-blondel').value) || 630;
-
     var errBox = $('#escalier-error');
-    if (hauteurTotale <= 0 || hVisee <= 0){
-      errBox.textContent = 'Indique une hauteur totale à monter et une hauteur de marche visée valides.';
-      errBox.hidden = false;
-      $('#escalier-results').hidden = true;
-      return;
+    var r, connu;
+
+    if (escalierMode === 'giron'){
+      var gVisee = parseFloat($('#escalier-giron-vise').value) || 0;
+      if (hauteurTotale <= 0 || gVisee <= 0 || gVisee >= blondel){
+        errBox.textContent = 'Indique une hauteur totale et un giron visé valides (le giron doit être inférieur à la constante de Blondel).';
+        errBox.hidden = false;
+        $('#escalier-results').hidden = true;
+        return;
+      }
+      r = calculerParGiron(hauteurTotale, gVisee, blondel);
+      connu = 'giron visé de ' + gVisee + ' mm';
+    } else if (escalierMode === 'emprise'){
+      var empriseDispo = parseFloat($('#escalier-emprise-dispo').value) || 0;
+      if (hauteurTotale <= 0 || empriseDispo <= 0){
+        errBox.textContent = 'Indique une hauteur totale et une emprise au sol disponible valides.';
+        errBox.hidden = false;
+        $('#escalier-results').hidden = true;
+        return;
+      }
+      r = calculerParEmprise(hauteurTotale, empriseDispo, blondel);
+      connu = 'emprise au sol disponible de ' + (empriseDispo / 1000).toFixed(2) + ' m';
+    } else {
+      var hVisee = parseFloat($('#escalier-h-visee').value) || 0;
+      if (hauteurTotale <= 0 || hVisee <= 0){
+        errBox.textContent = 'Indique une hauteur totale à monter et une hauteur de marche visée valides.';
+        errBox.hidden = false;
+        $('#escalier-results').hidden = true;
+        return;
+      }
+      r = calculerParHauteur(hauteurTotale, hVisee, blondel);
+      connu = 'hauteur de marche visée de ' + hVisee + ' mm';
     }
     errBox.hidden = true;
-
-    var r = calculerEscalier(hauteurTotale, hVisee, blondel);
 
     $('#res-esc-nb').textContent = r.n;
     $('#res-esc-h').textContent = r.hReelle.toFixed(1) + ' mm';
@@ -728,7 +827,7 @@ input[type=number]:focus,select:focus{outline:2px solid var(--accent);outline-of
     if (r.giron < 240 || r.giron > 320) warnings.push('giron (' + r.giron.toFixed(0) + ' mm) hors de la fourchette confort 240-320 mm');
     var warnBox = $('#res-esc-warn');
     if (warnings.length){
-      warnBox.textContent = 'Attention, ' + warnings.join(' et ') + '. Ajuste la hauteur de marche visée ou la hauteur totale si possible.';
+      warnBox.textContent = 'Attention, ' + warnings.join(' et ') + '. Ajuste la valeur de départ ou la hauteur totale si possible.';
       warnBox.hidden = false;
     } else {
       warnBox.hidden = true;
@@ -740,6 +839,7 @@ input[type=number]:focus,select:focus{outline:2px solid var(--accent);outline-of
       client: $('#escalier-client').value,
       hauteurTotale: hauteurTotale,
       blondel: blondel,
+      connu: connu,
       n: r.n,
       hReelle: r.hReelle,
       giron: r.giron,
@@ -851,8 +951,8 @@ input[type=number]:focus,select:focus{outline:2px solid var(--accent);outline-of
     var y = pdfHeader(doc, "Calcul d'escalier", r.client);
 
     doc.setFontSize(11);
-    doc.text('Hauteur totale à monter : ' + r.hauteurTotale + ' mm', 14, y);
-    y += 8;
+    doc.text('Escalier droit (une seule volée) — hauteur totale : ' + r.hauteurTotale + ' mm, ' + r.connu + '.', 14, y, { maxWidth: 182 });
+    y += 10;
     doc.text('Nombre de marches : ' + r.n, 14, y);
     y += 6;
     doc.text('Hauteur de marche réelle : ' + r.hReelle.toFixed(1) + ' mm', 14, y);
